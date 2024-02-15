@@ -1,7 +1,6 @@
 from os.path import *
 from shapely.geometry import Polygon, Point
 import geopandas as gpd
-import warnings
 
 workdir = r'E:\work\interview_tests\1spatial'
 pt_file = join(workdir,'dmv_15min_centriods.shp')
@@ -31,32 +30,33 @@ for pts in pts_gdf.itertuples(): #points
         row_name = row.Name
         poly_geom = row.geometry
         poly_center = row.cent
-        dist = poly_geom.distance(pt_geom)
+        dist = poly_geom.distance(pt_geom)       #get distance from piont to polygon 
         #print(dist)
-        pts_dist.append(dist) #add distances to list
-        poly_name_list.append(row_name) #add name to list
-    smallest = min(pts_dist)
-    small_index = pts_dist.index(smallest)
+        pts_dist.append(dist)                    #add distances to list
+        poly_name_list.append(row_name)          #add name to list
+    smallest = min(pts_dist)                     #get the smallest distance (if point inside polygon then dist will be 0)
+    small_index = pts_dist.index(smallest)       #get the index location in the list pts_dist
     if pts_dist[small_index] > 0:
         print(f'{pt_name} needs to be moved to be inside {poly_name_list[small_index]}')
 
-
         pt_geom2 = fire_gdp[fire_gdp['Name'] == poly_name_list[small_index]].cent #new point file will have outside points now at the
-        coords = pt_geom2.get_coordinates() #These lines are insane that i have to convert to coords
-        pt_coords = Point(coords)           #then convert to Shapely point
-        print(pt_coords)                    #why can't i just input geopandas point into geometry???
+        coords = pt_geom2.get_coordinates()     #convert to geoseries to coordinates
+        pt_coords = Point(coords)               #coordinates to Shapely Point
+        #print(pt_coords)                        #why can't i just input geopandas point into geometry???
         point_coords_lst.append(pt_coords)
-
 
         print(pts_gdf2.loc[indexer,['geometry']]) #before
         pts_gdf2.loc[indexer, ['geometry']] = pt_coords
         print(pts_gdf2.loc[indexer,'geometry']) #after
+        #before and after to check if geometry was accurately changed
         print()
 
 
     else:
         point_coords_lst.append(pt_geom)
 
+#below was what was bugged
+#i think the bug is because it is outside the previous loop so its just looking at the last polygon, so all points outside a "fire" polygon being to this one 
 '''
 for i, poly in enumerate(point_coords_lst):
     print(f'{i} {poly}')
